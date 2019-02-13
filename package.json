@@ -9,6 +9,7 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
+    "prettier": "prettier -c .prettierrc.js --write '**/*.[jt]s'",
     "e2e": "ng e2e"
   },
   "private": true,
