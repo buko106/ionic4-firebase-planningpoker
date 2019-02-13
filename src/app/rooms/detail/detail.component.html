@@ -1,0 +1,9 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ roomKey$ | async }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding>
+  <a [routerLink]="['/rooms']" routerDirection="back">roomsに戻る</a>
+</ion-content>
