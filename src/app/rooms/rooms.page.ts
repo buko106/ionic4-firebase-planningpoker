@@ -1,4 +1,9 @@
 import { Component, OnInit } from '@angular/core';
+import {
+  FirebaseBackendService,
+  RoomStats,
+} from '../services/firebase-backend.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-rooms',
@@ -6,7 +11,15 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./rooms.page.scss'],
 })
 export class RoomsPage implements OnInit {
-  constructor() {}
+  activeRooms$: Observable<RoomStats[]>;
 
-  ngOnInit() {}
+  constructor(private readonly firebaseBackend: FirebaseBackendService) {}
+
+  ngOnInit() {
+    this.activeRooms$ = this.firebaseBackend.activeRooms$;
+  }
+
+  trackRoom(index: number, room: RoomStats) {
+    return room.key;
+  }
 }

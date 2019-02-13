@@ -7,6 +7,7 @@ import { IonicModule } from '@ionic/angular';
 
 import { RoomsPage } from './rooms.page';
 import { DetailComponent } from './detail/detail.component';
+import { FirebaseBackendService } from '../services/firebase-backend.service';
 
 const routes: Routes = [
   {
@@ -27,5 +28,6 @@ const routes: Routes = [
     RouterModule.forChild(routes),
   ],
   declarations: [RoomsPage, DetailComponent],
+  providers: [FirebaseBackendService],
 })
 export class RoomsPageModule {}
