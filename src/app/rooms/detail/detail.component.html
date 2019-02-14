@@ -1,9 +1,13 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>{{ roomKey$ | async }}</ion-title>
+    <ion-title>{{ roomDataSource.displayName }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content padding>
-  <a [routerLink]="['/rooms']" routerDirection="back">roomsに戻る</a>
+  <ion-list *ngIf="roomDataSource != null">
+    <ion-item *ngFor="let member of (roomDataSource.activeMembers$ | async)">
+      <ion-text>{{ member.display_name }}</ion-text>
+    </ion-item>
+  </ion-list>
 </ion-content>

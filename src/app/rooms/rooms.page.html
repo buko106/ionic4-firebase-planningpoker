@@ -21,6 +21,9 @@
         </ion-row>
       </ion-grid>
     </ion-item>
+    <ion-item *ngIf="activeRooms.length === 0">
+      <ion-text color="medium">部屋はありません</ion-text>
+    </ion-item>
   </ion-list>
   <div text-center *ngIf="!(activeRooms$ | async)">
     <ion-spinner></ion-spinner>

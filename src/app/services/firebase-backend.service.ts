@@ -18,6 +18,79 @@ export interface RoomStats {
   activeMemberCount: number;
 }
 
+export const CARD2TEXT = {
+  zero: '0',
+  half: '1/2',
+  one: '1',
+  two: '2',
+  three: '3',
+  five: '5',
+  eight: '8',
+  question_mark: '?',
+};
+
+export type CardChoice = keyof typeof CARD2TEXT;
+
+export interface MemberStats {
+  display_name: string;
+  key: string;
+  card_choice: CardChoice | null;
+}
+
+export interface RoomDataSource {
+  readonly activeMembers$: Observable<MemberStats[]>;
+  readonly displayName: string;
+  dispose(): void;
+}
+
+class RoomDataSourceImpl implements RoomDataSource {
+  constructor(
+    private readonly firebaseBackend: FirebaseBackendService,
+    private readonly roomRef: firebase.database.Reference
+  ) {
+    this.initializeRoomStats();
+    this.subscribeMemberStatsChange();
+  }
+  private activeMembersSource = new Subject<MemberStats[]>();
+  readonly activeMembers$ = this.activeMembersSource.asObservable();
+  displayName = '';
+
+  private async initializeRoomStats() {
+    this.displayName = (await this.roomRef.child('name').once('value')).val();
+  }
+
+  private async subscribeMemberStatsChange() {
+    await this.firebaseBackend.serverTimeOffsetReady();
+    this.roomRef
+      .child('members')
+      .orderByChild('joined_at')
+      .on('value', snapshot => {
+        console.log('snapshot of the room', snapshot);
+        if (snapshot == null) {
+          this.activeMembersSource.next(null);
+          return;
+        }
+
+        const memberStats: MemberStats[] = [];
+        snapshot.forEach(memberSnapshot => {
+          // TODO: filter out inactive members
+          memberStats.push({
+            key: memberSnapshot.key,
+            display_name: memberSnapshot.child('display_name').val(),
+            card_choice: memberSnapshot.child('card_choice').val() || null,
+          });
+        });
+        console.log('member stats', memberStats);
+        this.activeMembersSource.next(memberStats);
+      });
+  }
+
+  dispose() {
+    console.log('disposing...');
+    this.roomRef.off();
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -39,13 +112,21 @@ export class FirebaseBackendService {
     this.subscribeRoomStatsChange();
   }
 
-  async ready(): Promise<void> {
+  async serverTimeOffsetReady(): Promise<void> {
     await this.serverTimeOffsetSource
       .pipe(
         filter(value => value != null),
         take(1)
       )
       .toPromise();
+  }
+
+  get serverTimeOffset(): number {
+    return this.serverTimeOffsetSource.value;
+  }
+
+  getRoomDataSource(roomKey: string) {
+    return new RoomDataSourceImpl(this, this.roomsRef.child(roomKey));
   }
 
   private startSyncingServerTimeOffset() {
@@ -59,7 +140,7 @@ export class FirebaseBackendService {
   }
 
   private async subscribeRoomStatsChange() {
-    await this.ready();
+    await this.serverTimeOffsetReady();
     this.roomsRef
       .startAt(
         new Date().getTime() +
