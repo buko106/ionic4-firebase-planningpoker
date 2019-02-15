@@ -7,7 +7,7 @@
 <ion-content padding>
   <ion-list *ngIf="(activeRooms$ | async); let activeRooms">
     <ion-list-header>
-      アクティブな部屋一覧
+      {{activeRooms.length === 0 ? '部屋はありません' : 'アクティブな部屋一覧'}}
     </ion-list-header>
     <ion-item
       *ngFor="let room of activeRooms; trackBy: trackRoom"
@@ -20,9 +20,6 @@
           <ion-col size="2">{{room.activeMemberCount}}人</ion-col>
         </ion-row>
       </ion-grid>
-    </ion-item>
-    <ion-item *ngIf="activeRooms.length === 0">
-      <ion-text color="medium">部屋はありません</ion-text>
     </ion-item>
   </ion-list>
   <div text-center *ngIf="!(activeRooms$ | async)">

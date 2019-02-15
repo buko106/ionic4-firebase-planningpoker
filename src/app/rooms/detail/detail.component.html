@@ -6,8 +6,60 @@
 
 <ion-content padding>
   <ion-list *ngIf="roomDataSource != null">
-    <ion-item *ngFor="let member of (roomDataSource.activeMembers$ | async)">
-      <ion-text>{{ member.display_name }}</ion-text>
+    <ion-item
+      *ngFor="
+        let member of (roomDataSource.activeMembers$ | async);
+        trackBy: trackMember
+      "
+    >
+      <ion-grid>
+        <ion-row>
+          <ion-col size="11" sizeSm="3">
+            <ion-text>{{ member.display_name }}</ion-text>
+          </ion-col>
+          <ion-col size="1" *ngIf="!(roomDataSource.revealed$ | async)">
+            <ng-container
+              *ngIf="member.card_choice != null; then checkmark; else close"
+            ></ng-container>
+          </ion-col>
+          <ion-col size="1" *ngIf="(roomDataSource.revealed$ | async)">
+            {{
+              member.card_choice != null
+                ? card2text(member.card_choice) + 'pt'
+                : ''
+            }}
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-item>
+    <ion-item>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" sizeSm="3" offsetSm="3">
+            <ion-button
+              (click)="onClickResetButton($event)"
+              expand="block"
+              [disabled]="resetButtonDisabled$ | async"
+              >RESET</ion-button
+            >
+          </ion-col>
+          <ion-col size="6" sizeSm="3">
+            <ion-button
+              (click)="onClickGoButton($event)"
+              expand="block"
+              [disabled]="goButtonDisabled$ | async"
+              >GO!</ion-button
+            >
+          </ion-col>
+        </ion-row>
+      </ion-grid>
     </ion-item>
   </ion-list>
 </ion-content>
+
+<ng-template #checkmark
+  ><ion-icon name="checkmark-circle" color="success"></ion-icon
+></ng-template>
+<ng-template #close
+  ><ion-icon name="close-circle" color="danger"></ion-icon
+></ng-template>

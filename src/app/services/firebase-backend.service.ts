@@ -39,6 +39,7 @@ export interface MemberStats {
 
 export interface RoomDataSource {
   readonly activeMembers$: Observable<MemberStats[]>;
+  readonly revealed$: Observable<boolean>;
   readonly displayName: string;
   dispose(): void;
 }
@@ -50,13 +51,22 @@ class RoomDataSourceImpl implements RoomDataSource {
   ) {
     this.initializeRoomStats();
     this.subscribeMemberStatsChange();
+    this.subscribeRevealed();
   }
   private activeMembersSource = new Subject<MemberStats[]>();
+  private revealedSource = new BehaviorSubject<boolean>(false);
   readonly activeMembers$ = this.activeMembersSource.asObservable();
+  readonly revealed$ = this.revealedSource.asObservable();
   displayName = '';
 
   private async initializeRoomStats() {
     this.displayName = (await this.roomRef.child('name').once('value')).val();
+  }
+
+  private async subscribeRevealed() {
+    this.roomRef.child('revealed').on('value', snapshot => {
+      this.revealedSource.next(snapshot.val());
+    });
   }
 
   private async subscribeMemberStatsChange() {
@@ -105,7 +115,8 @@ export class FirebaseBackendService {
   private database: firebase.database.Database;
   private roomsRef: firebase.database.Reference;
   private serverTimeOffsetSource = new BehaviorSubject<number>(null);
-  private activeRoomsSource = new Subject<RoomStats[]>();
+  private readonly activeRoomsSource = new Subject<RoomStats[]>();
+  readonly activeRooms$ = this.activeRoomsSource.asObservable();
 
   private async initAsync() {
     this.startSyncingServerTimeOffset();
@@ -125,7 +136,7 @@ export class FirebaseBackendService {
     return this.serverTimeOffsetSource.value;
   }
 
-  getRoomDataSource(roomKey: string) {
+  buildRoomDataSource(roomKey: string) {
     return new RoomDataSourceImpl(this, this.roomsRef.child(roomKey));
   }
 
@@ -165,9 +176,5 @@ export class FirebaseBackendService {
         });
         this.activeRoomsSource.next(roomStats);
       });
-  }
-
-  get activeRooms$(): Observable<RoomStats[]> {
-    return this.activeRoomsSource.asObservable();
   }
 }
